@@ -1,0 +1,7 @@
+main
+*.png
+*.json
+__pycache__
+*_generated
+log
+*.runtime

@@ -1,0 +1,68 @@
+# StarPU --- Runtime system for heterogeneous multicore architectures.
+#
+# Copyright (C) 2021-2022  Université de Bordeaux, CNRS (LaBRI UMR 5800), Inria
+#
+# StarPU is free software; you can redistribute it and/or modify
+# it under the terms of the GNU Lesser General Public License as published by
+# the Free Software Foundation; either version 2.1 of the License, or (at
+# your option) any later version.
+#
+# StarPU is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# See the GNU Lesser General Public License in COPYING.LGPL for more details.
+#
+---
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  tags:
+    - starpu
+    - linux
+  script:
+    - ./contrib/gitlab/build.sh
+  artifacts:
+    paths:
+      - starpu*.tar.gz
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never  # Prevent pipeline run for push event
+    - when: always # Run pipeline for all other cases
+
+.check_template:
+  stage: deploy
+  tags:
+    - starpu
+    - linux
+  needs: [build]
+  dependencies:
+    - build
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never  # Prevent pipeline run for push event
+    - when: always # Run pipeline for all other cases
+
+check_linux:
+  extends: .check_template
+  script:
+    - ./contrib/gitlab/deploy.sh
+
+#check_macosx:
+#  extends: .check_template
+#  tags : ["macosx"]
+#  script:
+#    - STARPU_USER_CONFIGURE_OPTIONS=--disable-mpi ./contrib/gitlab/deploy.sh
+
+check_simgrid:
+  extends: .check_template
+  script:
+    - ./contrib/gitlab/simgrid.sh
+
+check_coverity:
+  extends: .check_template
+  script:
+    - ./contrib/gitlab/coverity.sh
